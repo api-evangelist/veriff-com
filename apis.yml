@@ -1,0 +1,181 @@
+aid: veriff-com
+url: https://raw.githubusercontent.com/api-evangelist/veriff-com/refs/heads/main/apis.yml
+name: Veriff
+kind: company
+description: Veriff is a global identity verification platform that combines AI and
+  human review to verify people online. Its API-first IDV stack covers document and
+  biometric (face-match, liveness) verification, KYC/AML onboarding, proof of address,
+  and database/watchlist (PEP and sanctions) screening, orchestrated around verification
+  sessions with HMAC-secured REST endpoints and decision/event webhooks.
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+tags:
+- Identity Verification
+- KYC
+- AML
+- Biometrics
+- Document Verification
+- Fraud Prevention
+created: '2026-07-01'
+modified: '2026-07-01'
+specificationVersion: '0.19'
+apis:
+- aid: veriff-com:veriff-sessions-api
+  name: Veriff Sessions API
+  tags:
+  - Sessions
+  - Identity Verification
+  - Onboarding
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://devdocs.veriff.com/docs/how-to-generate-sessions-manually
+  baseURL: https://stationapi.veriff.com/v1
+  properties:
+  - url: https://devdocs.veriff.com/docs/how-to-generate-sessions-manually
+    type: Documentation
+  - url: https://devdocs.veriff.com/apidocs/v1sessions
+    type: APIReference
+  - url: openapi/veriff-com-openapi.yml
+    type: OpenAPI
+  - url: collections/veriff-com.postman_collection.json
+    type: PostmanCollection
+  - url: collections/veriff-com.opencollection.json
+    type: OpenCollection
+  description: Creates verification sessions that give an end-user a hosted or in-context
+    flow to verify identity. Supports vendorData/endUserData correlation, callback
+    URLs, session submission (PATCH) and deletion (DELETE).
+- aid: veriff-com:veriff-decisions-api
+  name: Veriff Decisions API
+  tags:
+  - Decisions
+  - Verifications
+  - Results
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://devdocs.veriff.com/apidocs/v1sessionsiddecision-1
+  baseURL: https://stationapi.veriff.com/v1
+  properties:
+  - url: https://devdocs.veriff.com/apidocs/v1sessionsiddecision-1
+    type: APIReference
+  - url: openapi/veriff-com-openapi.yml
+    type: OpenAPI
+  - url: collections/veriff-com.postman_collection.json
+    type: PostmanCollection
+  - url: collections/veriff-com.opencollection.json
+    type: OpenCollection
+  description: Retrieves the verification decision for a session - status (approved,
+    declined, resubmission_requested, expired, abandoned, review), extracted document
+    and person data, insights, and risk labels.
+- aid: veriff-com:veriff-person-api
+  name: Veriff Person API
+  tags:
+  - Person
+  - Extracted Data
+  - PII
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://devdocs.veriff.com/apidocs/veriff-public-api-guides
+  baseURL: https://stationapi.veriff.com/v1
+  properties:
+  - url: https://devdocs.veriff.com/apidocs/veriff-public-api-guides
+    type: APIReference
+  - url: openapi/veriff-com-openapi.yml
+    type: OpenAPI
+  - url: collections/veriff-com.postman_collection.json
+    type: PostmanCollection
+  - url: collections/veriff-com.opencollection.json
+    type: OpenCollection
+  description: Returns the verified person object for a session - name, date of birth,
+    nationality/citizenship, gender, and identifiers extracted from the verification.
+- aid: veriff-com:veriff-media-api
+  name: Veriff Media API
+  tags:
+  - Media
+  - Images
+  - Document Upload
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://devdocs.veriff.com/apidocs/v1sessionsidmedia-3
+  baseURL: https://stationapi.veriff.com/v1
+  properties:
+  - url: https://devdocs.veriff.com/apidocs/v1sessionsidmedia-3
+    type: APIReference
+  - url: openapi/veriff-com-openapi.yml
+    type: OpenAPI
+  - url: collections/veriff-com.postman_collection.json
+    type: PostmanCollection
+  - url: collections/veriff-com.opencollection.json
+    type: OpenCollection
+  description: Uploads document, face, and NFC media into a session and retrieves media
+    metadata and individual image files by session, attempt, or media ID for server-to-server
+    integrations.
+- aid: veriff-com:veriff-watchlist-screening-api
+  name: Veriff Watchlist Screening API
+  tags:
+  - AML
+  - Watchlist
+  - PEP
+  - Sanctions
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://devdocs.veriff.com/apidocs/veriff-public-api-guides
+  baseURL: https://stationapi.veriff.com/v1
+  properties:
+  - url: https://devdocs.veriff.com/apidocs/veriff-public-api-guides
+    type: APIReference
+  - url: openapi/veriff-com-openapi.yml
+    type: OpenAPI
+  - url: collections/veriff-com.postman_collection.json
+    type: PostmanCollection
+  - url: collections/veriff-com.opencollection.json
+    type: OpenCollection
+  description: Queries the AML watchlist-screening result for a session - Politically
+    Exposed Persons (PEP), sanctions, and adverse-media matches with hit details.
+- aid: veriff-com:veriff-attempts-api
+  name: Veriff Attempts API
+  tags:
+  - Attempts
+  - Sessions
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://devdocs.veriff.com/apidocs/veriff-public-api-guides
+  baseURL: https://stationapi.veriff.com/v1
+  properties:
+  - url: https://devdocs.veriff.com/apidocs/veriff-public-api-guides
+    type: APIReference
+  - url: openapi/veriff-com-openapi.yml
+    type: OpenAPI
+  - url: collections/veriff-com.postman_collection.json
+    type: PostmanCollection
+  - url: collections/veriff-com.opencollection.json
+    type: OpenCollection
+  description: Lists the individual verification attempts made within a session and
+    exposes the media captured on each attempt.
+- aid: veriff-com:veriff-webhooks-api
+  name: Veriff Webhooks API
+  tags:
+  - Webhooks
+  - Callbacks
+  - Events
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://devdocs.veriff.com/docs/webhooks-guide
+  baseURL: https://stationapi.veriff.com/v1
+  properties:
+  - url: https://devdocs.veriff.com/docs/webhooks-guide
+    type: Documentation
+  - url: openapi/veriff-com-openapi.yml
+    type: OpenAPI
+  description: Server-to-server Decision and Event webhooks (callbacks) that Veriff
+    POSTs to your endpoint as a verification progresses and concludes, each signed
+    with x-auth-client and an x-hmac-signature over the payload body.
+common:
+- type: GitHubOrganization
+  url: https://github.com/veriff
+- type: LinkedIn
+  url: https://www.linkedin.com/company/veriff
+- type: Website
+  url: https://www.veriff.com
+- type: Documentation
+  url: https://devdocs.veriff.com
+- type: Plans
+  url: plans/veriff-com-plans-pricing.yml
+- type: RateLimits
+  url: rate-limits/veriff-com-rate-limits.yml
+- type: FinOps
+  url: finops/veriff-com-finops.yml
+maintainers:
+- FN: Kin Lane
+  email: kin@apievangelist.com

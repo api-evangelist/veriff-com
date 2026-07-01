@@ -1,0 +1,55 @@
+specification: API Commons Rate Limits
+specificationVersion: '0.1'
+schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main/schema/api-commons.yml#/$defs/RateLimits
+provider: Veriff
+providerId: veriff-com
+created: '2026-07-01'
+modified: '2026-07-01'
+reconciled: false
+tags:
+- Identity Verification
+- KYC
+- AML
+- Rate Limiting
+- Quotas
+- Throttling
+description: >-
+  Veriff does not publish specific numeric API rate limits. The Public API is
+  metered per integration (identified by X-AUTH-CLIENT) and is subject to
+  server-side throttling to protect platform stability. Practical throughput
+  is governed more by the commercial verification volume agreed with Veriff
+  than by a documented requests-per-second ceiling. Callers should handle
+  429 Too Many Requests responses and back off. Decision data is typically
+  consumed via webhooks rather than by polling the decision endpoint, which
+  keeps request rates low by design.
+notes: >-
+  No public per-endpoint RPS/RPM values are documented; confirm any applicable
+  limits and burst allowances with Veriff during reconciliation.
+sources:
+- https://devdocs.veriff.com/apidocs/veriff-public-api-guides
+- https://devdocs.veriff.com/docs/webhooks-guide
+responseCodes:
+  throttled: 429
+limits:
+- name: Per-Integration Requests
+  scope: integration
+  metric: requests
+  limit: see provider documentation
+  notes: Enforced per integration (X-AUTH-CLIENT); no public numeric value.
+- name: Session Creation
+  scope: integration
+  metric: sessions
+  limit: governed by commercial volume
+  notes: Effective ceiling tied to the agreed verification volume, not a hard RPS.
+policies:
+- name: Prefer Webhooks Over Polling
+  description: >-
+    Consume Decision and Event webhooks instead of polling the decision
+    endpoint to minimize request volume and avoid throttling.
+- name: Backoff Strategy
+  description: >-
+    On 429 responses, implement exponential backoff with jitter and retry the
+    request after a short delay.
+maintainers:
+- FN: Kin Lane
+  email: kin@apievangelist.com

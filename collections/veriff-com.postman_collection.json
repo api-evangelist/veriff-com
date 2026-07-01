@@ -1,0 +1,280 @@
+{
+  "info": {
+    "name": "Veriff Public API",
+    "description": "Veriff identity verification Public API. Every request carries X-AUTH-CLIENT and an X-HMAC-SIGNATURE (HMAC-SHA256) header; POST/PATCH sign the payload body, GET/DELETE sign the resource ID. POST /sessions requires only X-AUTH-CLIENT.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://stationapi.veriff.com/v1"
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "attemptId",
+      "value": ""
+    },
+    {
+      "key": "mediaId",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      { "key": "key", "value": "X-AUTH-CLIENT" },
+      { "key": "value", "value": "{{authClient}}" },
+      { "key": "in", "value": "header" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "Create a verification session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verification\": {\n    \"callback\": \"https://example.com/callback\",\n    \"person\": {\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\"\n    },\n    \"vendorData\": \"your-user-id\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates a verification session and returns a session ID and hosted verification URL."
+          }
+        },
+        {
+          "name": "Update session status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" },
+              { "key": "X-HMAC-SIGNATURE", "value": "{{hmacSignature}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verification\": {\n    \"status\": \"submitted\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Updates a session, typically to mark it submitted. Sign the payload body."
+          }
+        },
+        {
+          "name": "Delete a session",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" },
+              { "key": "X-HMAC-SIGNATURE", "value": "{{hmacSignature}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"]
+            },
+            "description": "Deletes a session (not enabled by default). Sign the session ID."
+          }
+        },
+        {
+          "name": "Upload collected data",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" },
+              { "key": "X-HMAC-SIGNATURE", "value": "{{hmacSignature}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/collected-data",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "collected-data"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Submits structured end-user data collected during verification."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Media",
+      "item": [
+        {
+          "name": "Upload media to a session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" },
+              { "key": "X-HMAC-SIGNATURE", "value": "{{hmacSignature}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/media",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "media"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image\": {\n    \"context\": \"document-front\",\n    \"content\": \"data:image/jpeg;base64,...\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Uploads a document, face, or NFC image into a session."
+          }
+        },
+        {
+          "name": "List media for a session",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" },
+              { "key": "X-HMAC-SIGNATURE", "value": "{{hmacSignature}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/media",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "media"]
+            },
+            "description": "Returns metadata for images and videos captured in a session."
+          }
+        },
+        {
+          "name": "List media for an attempt",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" },
+              { "key": "X-HMAC-SIGNATURE", "value": "{{hmacSignature}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/attempts/{{attemptId}}/media",
+              "host": ["{{baseUrl}}"],
+              "path": ["attempts", "{{attemptId}}", "media"]
+            },
+            "description": "Returns media metadata for a specific attempt."
+          }
+        },
+        {
+          "name": "Retrieve a media file",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" },
+              { "key": "X-HMAC-SIGNATURE", "value": "{{hmacSignature}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/media/{{mediaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "{{mediaId}}"]
+            },
+            "description": "Returns a specific image file by media ID. Sign the media ID."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Decisions",
+      "item": [
+        {
+          "name": "Retrieve a verification decision",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" },
+              { "key": "X-HMAC-SIGNATURE", "value": "{{hmacSignature}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "decision"]
+            },
+            "description": "Returns the decision, extracted data, insights, and risk labels. Sign the session ID."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Person",
+      "item": [
+        {
+          "name": "Retrieve verified person data",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" },
+              { "key": "X-HMAC-SIGNATURE", "value": "{{hmacSignature}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/person",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "person"]
+            },
+            "description": "Returns the verified person object for a session."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Watchlist Screening",
+      "item": [
+        {
+          "name": "Retrieve AML watchlist screening",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" },
+              { "key": "X-HMAC-SIGNATURE", "value": "{{hmacSignature}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/watchlist-screening",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "watchlist-screening"]
+            },
+            "description": "Returns PEP, sanctions, and adverse-media screening results for a session."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attempts",
+      "item": [
+        {
+          "name": "List attempts in a session",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-AUTH-CLIENT", "value": "{{authClient}}" },
+              { "key": "X-HMAC-SIGNATURE", "value": "{{hmacSignature}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/attempts",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "attempts"]
+            },
+            "description": "Returns the list of verification attempts within a session."
+          }
+        }
+      ]
+    }
+  ]
+}

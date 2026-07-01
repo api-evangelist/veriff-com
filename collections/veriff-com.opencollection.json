@@ -1,0 +1,213 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Veriff Public API",
+    "version": "1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "apikey",
+      "key": "X-AUTH-CLIENT",
+      "value": "{{authClient}}",
+      "in": "header"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Sessions",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Create a verification session",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://stationapi.veriff.com/v1/sessions",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"verification\": {\n    \"callback\": \"https://example.com/callback\",\n    \"person\": {\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\"\n    },\n    \"vendorData\": \"your-user-id\"\n  }\n}"
+            }
+          },
+          "docs": "Creates a new verification session. Requires X-AUTH-CLIENT only; no X-HMAC-SIGNATURE."
+        },
+        {
+          "info": {
+            "name": "Update session status",
+            "type": "http"
+          },
+          "http": {
+            "method": "PATCH",
+            "url": "https://stationapi.veriff.com/v1/sessions/{{sessionId}}",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"verification\": {\n    \"status\": \"submitted\"\n  }\n}"
+            }
+          },
+          "docs": "Updates a session, typically to mark it submitted. Sign the payload body."
+        },
+        {
+          "info": {
+            "name": "Delete a session",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://stationapi.veriff.com/v1/sessions/{{sessionId}}"
+          },
+          "docs": "Deletes a session (not enabled by default). Sign the session ID."
+        },
+        {
+          "info": {
+            "name": "Upload collected data",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://stationapi.veriff.com/v1/sessions/{{sessionId}}/collected-data",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Submits structured end-user data collected during verification."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Media",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Upload media to a session",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://stationapi.veriff.com/v1/sessions/{{sessionId}}/media",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"image\": {\n    \"context\": \"document-front\",\n    \"content\": \"data:image/jpeg;base64,...\"\n  }\n}"
+            }
+          },
+          "docs": "Uploads a document, face, or NFC image into a session."
+        },
+        {
+          "info": {
+            "name": "List media for a session",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://stationapi.veriff.com/v1/sessions/{{sessionId}}/media"
+          },
+          "docs": "Returns metadata for images and videos captured in a session."
+        },
+        {
+          "info": {
+            "name": "List media for an attempt",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://stationapi.veriff.com/v1/attempts/{{attemptId}}/media"
+          },
+          "docs": "Returns media metadata for a specific attempt."
+        },
+        {
+          "info": {
+            "name": "Retrieve a media file",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://stationapi.veriff.com/v1/media/{{mediaId}}"
+          },
+          "docs": "Returns a specific image file by media ID. Sign the media ID."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Decisions",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Retrieve a verification decision",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://stationapi.veriff.com/v1/sessions/{{sessionId}}/decision"
+          },
+          "docs": "Returns the decision, extracted data, insights, and risk labels. Sign the session ID."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Person",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Retrieve verified person data",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://stationapi.veriff.com/v1/sessions/{{sessionId}}/person"
+          },
+          "docs": "Returns the verified person object for a session."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Watchlist Screening",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Retrieve AML watchlist screening",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://stationapi.veriff.com/v1/sessions/{{sessionId}}/watchlist-screening"
+          },
+          "docs": "Returns PEP, sanctions, and adverse-media screening results for a session."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Attempts",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List attempts in a session",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://stationapi.veriff.com/v1/sessions/{{sessionId}}/attempts"
+          },
+          "docs": "Returns the list of verification attempts within a session."
+        }
+      ]
+    }
+  ]
+}

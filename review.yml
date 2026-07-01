@@ -1,0 +1,67 @@
+aid: veriff-com
+name: Veriff
+review:
+  question: Does Veriff expose a documented public WebSocket API?
+  answer: false
+  date: '2026-07-01'
+  reviewer: API Evangelist
+  asyncapiSpecCreated: false
+  asyncapiScopeNote: |
+    No AsyncAPI document was created. Veriff's asynchronous surface is
+    server-to-server HTTP webhooks (Decision and Event callbacks that Veriff
+    POSTs to a customer-hosted URL), not a WebSocket or SSE stream initiated
+    by the client. Under the updated API Evangelist scope, HTTP webhooks are
+    documented in the OpenAPI/description rather than modeled as an AsyncAPI
+    channel, and no WebSocket surface exists to model.
+findings:
+  summary: |
+    Veriff does not publish a documented public WebSocket API. The Veriff
+    Public API is REST over HTTPS under a per-integration base URL (commonly
+    https://stationapi.veriff.com/v1), secured with X-AUTH-CLIENT and an
+    X-HMAC-SIGNATURE (HMAC-SHA256) header. Verification results are delivered
+    asynchronously through server-to-server Decision and Event webhooks that
+    Veriff POSTs to a customer endpoint; these are ordinary HTTPS callbacks,
+    not WebSocket or SSE. No ws:// or wss:// endpoint is documented.
+  transports:
+    - protocol: REST
+      scheme: https
+      baseURL: https://stationapi.veriff.com/v1
+      documented: true
+    - protocol: Webhook
+      scheme: https
+      note: Decision and Event callbacks POSTed by Veriff to a customer URL, signed with x-hmac-signature. Server-to-server HTTP, not WebSocket.
+      documented: true
+    - protocol: WebSocket
+      scheme: wss
+      documented: false
+      note: No WebSocket endpoint is documented anywhere in Veriff's developer docs as of the review date.
+  endpointsConfirmedRest:
+    - POST https://stationapi.veriff.com/v1/sessions
+    - PATCH https://stationapi.veriff.com/v1/sessions/{sessionId}
+    - DELETE https://stationapi.veriff.com/v1/sessions/{sessionId}
+    - POST https://stationapi.veriff.com/v1/sessions/{sessionId}/media
+    - POST https://stationapi.veriff.com/v1/sessions/{sessionId}/collected-data
+    - GET https://stationapi.veriff.com/v1/sessions/{sessionId}/decision
+    - GET https://stationapi.veriff.com/v1/sessions/{sessionId}/person
+    - GET https://stationapi.veriff.com/v1/sessions/{sessionId}/media
+    - GET https://stationapi.veriff.com/v1/sessions/{sessionId}/watchlist-screening
+    - GET https://stationapi.veriff.com/v1/sessions/{sessionId}/attempts
+    - GET https://stationapi.veriff.com/v1/attempts/{attemptId}/media
+    - GET https://stationapi.veriff.com/v1/media/{mediaId}
+sources:
+  - url: https://devdocs.veriff.com/apidocs/veriff-public-api-guides
+    type: APIReference
+    note: Lists REST endpoints under a per-integration /v1 base URL; no WebSocket mentioned.
+  - url: https://devdocs.veriff.com/docs/hmac-authentication-and-endpoint-security
+    type: Documentation
+    note: Auth via X-AUTH-CLIENT + X-HMAC-SIGNATURE (HMAC-SHA256); POST/PATCH sign payload, GET/DELETE sign the resource ID.
+  - url: https://devdocs.veriff.com/docs/webhooks-guide
+    type: Documentation
+    note: Decision and Event webhooks are HTTPS server-to-server callbacks signed with x-hmac-signature; not WebSocket.
+actions:
+  asyncapiPath: null
+  apisYmlUpdated: true
+  reason: |
+    No WebSocket protocol surface exists. Veriff's asynchronous delivery is
+    HTTP webhooks, which are captured as a Webhooks API entry in apis.yml and
+    described in the OpenAPI info block rather than as an AsyncAPI channel.

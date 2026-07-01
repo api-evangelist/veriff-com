@@ -1,0 +1,131 @@
+specification: API Commons Plans
+specificationVersion: '0.1'
+schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main/schema/api-commons.yml#/$defs/Plans
+provider: Veriff
+providerId: veriff-com
+created: '2026-07-01'
+modified: '2026-07-01'
+reconciled: false
+tags:
+- Identity Verification
+- KYC
+- AML
+- Biometrics
+- Plans
+description: >-
+  Veriff does not publish self-serve, list-price API pricing. Pricing is
+  quoted by sales and is fundamentally per-verification (per completed
+  identity check), with add-on modules - AML/watchlist screening, proof of
+  address, database verification, and fraud intelligence - priced on top.
+  Volume commitments and annual contracts drive per-verification rates down.
+  A free trial / sandbox is available for integration and testing, and
+  smaller customers may access lower-commitment, pay-as-you-go style plans,
+  but published unit prices are not disclosed on the website.
+notes: >-
+  Per-verification and per-module rates are contract-specific; confirm exact
+  pricing with Veriff sales during reconciliation. No public price sheet
+  exists as of the created date.
+sources:
+- https://www.veriff.com/pricing
+- https://www.veriff.com/product/identity-verification
+- https://devdocs.veriff.com
+plans:
+- id: veriff-trial
+  name: Free Trial / Sandbox
+  type: free
+  description: >-
+    Test/sandbox integration environment to build and validate the flow
+    before signing a commercial agreement. Not for production volume.
+  entries:
+  - label: Sandbox Verifications
+    name: sandbox_verifications
+    type: free
+    metric: verifications
+    limit: -1
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: free (test environment)
+    userMultiplied: false
+  elements:
+  - name: Sessions
+  - name: Decisions
+  - name: Media
+- id: veriff-pay-as-you-go
+  name: Pay-as-you-go (Self-Serve)
+  type: usage
+  description: >-
+    Lower-commitment per-verification pricing for smaller customers, billed
+    on completed verifications with no large annual minimum. Unit price is
+    quoted, not publicly listed.
+  entries:
+  - label: Identity Verification
+    name: identity_verification
+    type: usage
+    metric: verifications
+    limit: -1
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: per-verification (sales-quoted)
+    userMultiplied: false
+  elements:
+  - name: Document Verification
+  - name: Biometric / Face Match
+  - name: Liveness
+- id: veriff-enterprise
+  name: Enterprise / Custom
+  type: enterprise
+  description: >-
+    Negotiated per-verification rates with volume commitments, plus optional
+    add-on modules. Includes SLAs, dedicated support, and data-residency
+    options. Contact Veriff sales.
+  entries:
+  - label: Identity Verification (committed volume)
+    name: identity_verification_committed
+    type: usage
+    metric: verifications
+    limit: -1
+    timeFrame: year
+    geo: global
+    unit: 1
+    price: negotiated per-verification (volume-tiered)
+    userMultiplied: false
+  - label: AML / Watchlist Screening
+    name: aml_watchlist_screening
+    type: usage
+    metric: screenings
+    limit: -1
+    timeFrame: year
+    geo: global
+    unit: 1
+    price: add-on, per-screening (sales-quoted)
+    userMultiplied: false
+  - label: Proof of Address
+    name: proof_of_address
+    type: usage
+    metric: verifications
+    limit: -1
+    timeFrame: year
+    geo: global
+    unit: 1
+    price: add-on, per-verification (sales-quoted)
+    userMultiplied: false
+  - label: Database / Registry Verification
+    name: database_verification
+    type: usage
+    metric: verifications
+    limit: -1
+    timeFrame: year
+    geo: global
+    unit: 1
+    price: add-on, per-verification (sales-quoted)
+    userMultiplied: false
+  elements:
+  - name: Custom Volume Pricing
+  - name: SLAs and Dedicated Support
+  - name: Data Residency Options
+  - name: Fraud Intelligence
+maintainers:
+- FN: Kin Lane
+  email: kin@apievangelist.com
