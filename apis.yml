@@ -162,6 +162,12 @@ apis:
     POSTs to your endpoint as a verification progresses and concludes, each signed
     with x-auth-client and an x-hmac-signature over the payload body.
 common:
+- type: VulnerabilityDisclosure
+  url: security/veriff-com-vulnerability-disclosure.yml
+- type: DomainSecurity
+  url: security/veriff-com-domain-security.yml
+- type: Authentication
+  url: authentication/veriff-com-authentication.yml
 - type: GitHubOrganization
   url: https://github.com/veriff
 - type: LinkedIn
@@ -176,6 +182,8 @@ common:
   url: rate-limits/veriff-com-rate-limits.yml
 - type: FinOps
   url: finops/veriff-com-finops.yml
+- url: https://www.veriff.com/feed
+  type: Blog
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com

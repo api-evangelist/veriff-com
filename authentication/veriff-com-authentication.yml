@@ -1,0 +1,24 @@
+generated: '2026-07-11'
+method: derived
+source: openapi/veriff-com-openapi.yml
+summary:
+  types:
+  - apiKey
+  api_key_in:
+  - header
+schemes:
+- name: AuthClient
+  type: apiKey
+  in: header
+  parameter: X-AUTH-CLIENT
+  description: Your integration's public API key.
+  sources:
+  - openapi/veriff-com-openapi.yml
+- name: HmacSignature
+  type: apiKey
+  in: header
+  parameter: X-HMAC-SIGNATURE
+  description: Hex-encoded HMAC-SHA256 signature of the payload (POST/PATCH) or the resource
+    ID (GET/DELETE), keyed with your integration's shared secret.
+  sources:
+  - openapi/veriff-com-openapi.yml
