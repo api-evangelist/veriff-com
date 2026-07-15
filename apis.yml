@@ -162,6 +162,8 @@ apis:
     POSTs to your endpoint as a verification progresses and concludes, each signed
     with x-auth-client and an x-hmac-signature over the payload body.
 common:
+- type: AgenticAccess
+  url: agentic-access/veriff-com-agentic-access.yml
 - type: VulnerabilityDisclosure
   url: security/veriff-com-vulnerability-disclosure.yml
 - type: DomainSecurity
