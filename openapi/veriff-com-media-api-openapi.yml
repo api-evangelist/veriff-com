@@ -1,0 +1,216 @@
+openapi: 3.0.3
+info:
+  title: Veriff Public Attempts Media API
+  description: "The Veriff Public API powers online identity verification: creating verification sessions, submitting and retrieving media, and reading the resulting decision, person, watchlist-screening, and attempt data.\n\n## Base URL\n\nRequests are made against your integration base URL, retrieved from the Veriff Customer Portal (API Keys page). The common production base URL is `https://stationapi.veriff.com/v1`.\n\n## Authentication\n\nEvery request carries two headers:\n- `X-AUTH-CLIENT` - your integration's public API key, identifying the\n  request sender.\n\n- `X-HMAC-SIGNATURE` - a hex-encoded HMAC-SHA256 signature proving payload\n  authenticity, computed with your integration's shared secret key.\n\n\nWhat is signed depends on the method:\n- `POST` / `PATCH`: sign the exact raw request payload body.\n- `GET` / `DELETE`: sign the resource identifier used in the path\n  (for example the session ID).\n\n- `POST /sessions` is the one exception and does not require\n  `X-HMAC-SIGNATURE`, only `X-AUTH-CLIENT`.\n\n\nVeriff signs its responses and webhooks the same way, returning `vrf-auth-client`, `vrf-hmac-signature`, and `vrf-integration-id` headers so callers can verify authenticity."
+  termsOfService: https://www.veriff.com/terms
+  contact:
+    name: Veriff Support
+    url: https://www.veriff.com/support
+  version: '1.0'
+servers:
+- url: https://stationapi.veriff.com/v1
+  description: Veriff Public API (retrieve your exact base URL from the Customer Portal)
+security:
+- AuthClient: []
+  HmacSignature: []
+tags:
+- name: Media
+  description: Upload and retrieve document, face, and NFC media.
+paths:
+  /sessions/{sessionId}/media:
+    post:
+      operationId: uploadMedia
+      tags:
+      - Media
+      summary: Upload media to a session
+      description: Uploads a document, face, or NFC image into a session for server-to-server integrations. Images are provided as base64-encoded content with a context describing what the image represents.
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadMediaRequest'
+      responses:
+        '201':
+          description: Media stored.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadMediaResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    get:
+      operationId: getSessionMedia
+      tags:
+      - Media
+      summary: List media for a session
+      description: Returns metadata for the images and videos captured in a session.
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Media list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /attempts/{attemptId}/media:
+    get:
+      operationId: getAttemptMedia
+      tags:
+      - Media
+      summary: List media for an attempt
+      description: Returns metadata for media captured during a specific attempt.
+      parameters:
+      - name: attemptId
+        in: path
+        required: true
+        description: The attempt UUID.
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Media list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /media/{mediaId}:
+    get:
+      operationId: getMediaFile
+      tags:
+      - Media
+      summary: Retrieve a media file
+      description: Returns a specific image file by media ID. The signed value is the media ID.
+      parameters:
+      - name: mediaId
+        in: path
+        required: true
+        description: The media UUID.
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Binary image.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    UploadMediaResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        image:
+          $ref: '#/components/schemas/Media'
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: fail
+        code:
+          type: integer
+        message:
+          type: string
+    UploadMediaRequest:
+      type: object
+      required:
+      - image
+      properties:
+        image:
+          type: object
+          properties:
+            context:
+              type: string
+              description: What the image is, e.g. document-front, document-back, face.
+            content:
+              type: string
+              description: Base64-encoded image content (data URI).
+    MediaListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+        videos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+    Media:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        context:
+          type: string
+        url:
+          type: string
+          format: uri
+        mimetype:
+          type: string
+        size:
+          type: integer
+  responses:
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid X-AUTH-CLIENT / X-HMAC-SIGNATURE.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: The verification session UUID.
+      schema:
+        type: string
+        format: uuid
+  securitySchemes:
+    AuthClient:
+      type: apiKey
+      in: header
+      name: X-AUTH-CLIENT
+      description: Your integration's public API key.
+    HmacSignature:
+      type: apiKey
+      in: header
+      name: X-HMAC-SIGNATURE
+      description: Hex-encoded HMAC-SHA256 signature of the payload (POST/PATCH) or the resource ID (GET/DELETE), keyed with your integration's shared secret.

@@ -1,0 +1,246 @@
+openapi: 3.0.3
+info:
+  title: Veriff Public Attempts Sessions API
+  description: "The Veriff Public API powers online identity verification: creating verification sessions, submitting and retrieving media, and reading the resulting decision, person, watchlist-screening, and attempt data.\n\n## Base URL\n\nRequests are made against your integration base URL, retrieved from the Veriff Customer Portal (API Keys page). The common production base URL is `https://stationapi.veriff.com/v1`.\n\n## Authentication\n\nEvery request carries two headers:\n- `X-AUTH-CLIENT` - your integration's public API key, identifying the\n  request sender.\n\n- `X-HMAC-SIGNATURE` - a hex-encoded HMAC-SHA256 signature proving payload\n  authenticity, computed with your integration's shared secret key.\n\n\nWhat is signed depends on the method:\n- `POST` / `PATCH`: sign the exact raw request payload body.\n- `GET` / `DELETE`: sign the resource identifier used in the path\n  (for example the session ID).\n\n- `POST /sessions` is the one exception and does not require\n  `X-HMAC-SIGNATURE`, only `X-AUTH-CLIENT`.\n\n\nVeriff signs its responses and webhooks the same way, returning `vrf-auth-client`, `vrf-hmac-signature`, and `vrf-integration-id` headers so callers can verify authenticity."
+  termsOfService: https://www.veriff.com/terms
+  contact:
+    name: Veriff Support
+    url: https://www.veriff.com/support
+  version: '1.0'
+servers:
+- url: https://stationapi.veriff.com/v1
+  description: Veriff Public API (retrieve your exact base URL from the Customer Portal)
+security:
+- AuthClient: []
+  HmacSignature: []
+tags:
+- name: Sessions
+  description: Create, update, and delete verification sessions.
+paths:
+  /sessions:
+    post:
+      operationId: createSession
+      tags:
+      - Sessions
+      summary: Create a verification session
+      description: Starts a new verification session and returns a session ID plus a hosted verification URL. Does not require X-HMAC-SIGNATURE, only X-AUTH-CLIENT.
+      security:
+      - AuthClient: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /sessions/{sessionId}:
+    patch:
+      operationId: updateSession
+      tags:
+      - Sessions
+      summary: Update session status
+      description: Updates a session, typically to set its status to "submitted" once the end-user has provided all required media and data. The signed payload is the raw request body.
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Session updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteSession
+      tags:
+      - Sessions
+      summary: Delete a session
+      description: Deletes a session and its data. Not enabled by default; must be requested from Veriff. The signed value is the session ID.
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /sessions/{sessionId}/collected-data:
+    post:
+      operationId: uploadCollectedData
+      tags:
+      - Sessions
+      summary: Upload collected end-user data
+      description: Submits structured end-user data collected during verification.
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '201':
+          description: Data stored.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  responses:
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid X-AUTH-CLIENT / X-HMAC-SIGNATURE.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: fail
+        code:
+          type: integer
+        message:
+          type: string
+    CreateSessionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        verification:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            url:
+              type: string
+              format: uri
+              description: Hosted verification URL for the end-user.
+            sessionToken:
+              type: string
+            baseUrl:
+              type: string
+              format: uri
+    UpdateSessionRequest:
+      type: object
+      required:
+      - verification
+      properties:
+        verification:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+              - submitted
+    CreateSessionRequest:
+      type: object
+      required:
+      - verification
+      properties:
+        verification:
+          type: object
+          properties:
+            callback:
+              type: string
+              format: uri
+              description: URL the end-user is redirected to after verification.
+            person:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                idNumber:
+                  type: string
+            document:
+              type: object
+              properties:
+                number:
+                  type: string
+                type:
+                  type: string
+                  description: e.g. PASSPORT, ID_CARD, DRIVERS_LICENSE, RESIDENCE_PERMIT.
+                country:
+                  type: string
+                  description: ISO 3166-1 alpha-2 country code.
+            vendorData:
+              type: string
+              description: Your own identifier for correlating decisions to a user.
+            endUserId:
+              type: string
+              description: Optional end-user identifier for correlation.
+            timestamp:
+              type: string
+              format: date-time
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: The verification session UUID.
+      schema:
+        type: string
+        format: uuid
+  securitySchemes:
+    AuthClient:
+      type: apiKey
+      in: header
+      name: X-AUTH-CLIENT
+      description: Your integration's public API key.
+    HmacSignature:
+      type: apiKey
+      in: header
+      name: X-HMAC-SIGNATURE
+      description: Hex-encoded HMAC-SHA256 signature of the payload (POST/PATCH) or the resource ID (GET/DELETE), keyed with your integration's shared secret.

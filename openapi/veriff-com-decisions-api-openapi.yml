@@ -1,0 +1,199 @@
+openapi: 3.0.3
+info:
+  title: Veriff Public Attempts Decisions API
+  description: "The Veriff Public API powers online identity verification: creating verification sessions, submitting and retrieving media, and reading the resulting decision, person, watchlist-screening, and attempt data.\n\n## Base URL\n\nRequests are made against your integration base URL, retrieved from the Veriff Customer Portal (API Keys page). The common production base URL is `https://stationapi.veriff.com/v1`.\n\n## Authentication\n\nEvery request carries two headers:\n- `X-AUTH-CLIENT` - your integration's public API key, identifying the\n  request sender.\n\n- `X-HMAC-SIGNATURE` - a hex-encoded HMAC-SHA256 signature proving payload\n  authenticity, computed with your integration's shared secret key.\n\n\nWhat is signed depends on the method:\n- `POST` / `PATCH`: sign the exact raw request payload body.\n- `GET` / `DELETE`: sign the resource identifier used in the path\n  (for example the session ID).\n\n- `POST /sessions` is the one exception and does not require\n  `X-HMAC-SIGNATURE`, only `X-AUTH-CLIENT`.\n\n\nVeriff signs its responses and webhooks the same way, returning `vrf-auth-client`, `vrf-hmac-signature`, and `vrf-integration-id` headers so callers can verify authenticity."
+  termsOfService: https://www.veriff.com/terms
+  contact:
+    name: Veriff Support
+    url: https://www.veriff.com/support
+  version: '1.0'
+servers:
+- url: https://stationapi.veriff.com/v1
+  description: Veriff Public API (retrieve your exact base URL from the Customer Portal)
+security:
+- AuthClient: []
+  HmacSignature: []
+tags:
+- name: Decisions
+  description: Retrieve verification decisions and registry results.
+paths:
+  /sessions/{sessionId}/decision:
+    get:
+      operationId: getSessionDecision
+      tags:
+      - Decisions
+      summary: Retrieve a verification decision
+      description: Returns the decision for a session including status, code, extracted document and person data, insights, and risk labels. The signed value is the session ID.
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Verification decision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    Document:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        number:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        validFrom:
+          type: string
+          format: date
+          nullable: true
+        validUntil:
+          type: string
+          format: date
+          nullable: true
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: fail
+        code:
+          type: integer
+        message:
+          type: string
+    DecisionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        verification:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              type: string
+              enum:
+              - approved
+              - declined
+              - resubmission_requested
+              - expired
+              - abandoned
+              - review
+            code:
+              type: integer
+              description: Numeric verification code accompanying the status.
+            reason:
+              type: string
+              nullable: true
+            reasonCode:
+              type: integer
+              nullable: true
+            person:
+              $ref: '#/components/schemas/Person'
+            document:
+              $ref: '#/components/schemas/Document'
+            insights:
+              type: array
+              items:
+                type: object
+                properties:
+                  label:
+                    type: string
+                  result:
+                    type: string
+                  category:
+                    type: string
+            riskLabels:
+              type: array
+              items:
+                type: object
+                properties:
+                  label:
+                    type: string
+                  category:
+                    type: string
+                  sessionIds:
+                    type: array
+                    items:
+                      type: string
+            acceptanceTime:
+              type: string
+              format: date-time
+            decisionTime:
+              type: string
+              format: date-time
+            vendorData:
+              type: string
+              nullable: true
+    Person:
+      type: object
+      properties:
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        citizenship:
+          type: string
+          nullable: true
+        idNumber:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+  responses:
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid X-AUTH-CLIENT / X-HMAC-SIGNATURE.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: The verification session UUID.
+      schema:
+        type: string
+        format: uuid
+  securitySchemes:
+    AuthClient:
+      type: apiKey
+      in: header
+      name: X-AUTH-CLIENT
+      description: Your integration's public API key.
+    HmacSignature:
+      type: apiKey
+      in: header
+      name: X-HMAC-SIGNATURE
+      description: Hex-encoded HMAC-SHA256 signature of the payload (POST/PATCH) or the resource ID (GET/DELETE), keyed with your integration's shared secret.
