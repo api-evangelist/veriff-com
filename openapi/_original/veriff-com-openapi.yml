@@ -1,0 +1,718 @@
+openapi: 3.0.3
+info:
+  title: Veriff Public API
+  description: >-
+    The Veriff Public API powers online identity verification: creating
+    verification sessions, submitting and retrieving media, and reading the
+    resulting decision, person, watchlist-screening, and attempt data.
+
+
+    ## Base URL
+
+
+    Requests are made against your integration base URL, retrieved from the
+    Veriff Customer Portal (API Keys page). The common production base URL is
+    `https://stationapi.veriff.com/v1`.
+
+
+    ## Authentication
+
+
+    Every request carries two headers:
+
+    - `X-AUTH-CLIENT` - your integration's public API key, identifying the
+      request sender.
+
+    - `X-HMAC-SIGNATURE` - a hex-encoded HMAC-SHA256 signature proving payload
+      authenticity, computed with your integration's shared secret key.
+
+
+    What is signed depends on the method:
+
+    - `POST` / `PATCH`: sign the exact raw request payload body.
+
+    - `GET` / `DELETE`: sign the resource identifier used in the path
+      (for example the session ID).
+
+    - `POST /sessions` is the one exception and does not require
+      `X-HMAC-SIGNATURE`, only `X-AUTH-CLIENT`.
+
+
+    Veriff signs its responses and webhooks the same way, returning
+    `vrf-auth-client`, `vrf-hmac-signature`, and `vrf-integration-id` headers
+    so callers can verify authenticity.
+  termsOfService: https://www.veriff.com/terms
+  contact:
+    name: Veriff Support
+    url: https://www.veriff.com/support
+  version: '1.0'
+servers:
+  - url: https://stationapi.veriff.com/v1
+    description: Veriff Public API (retrieve your exact base URL from the Customer Portal)
+security:
+  - AuthClient: []
+    HmacSignature: []
+tags:
+  - name: Sessions
+    description: Create, update, and delete verification sessions.
+  - name: Media
+    description: Upload and retrieve document, face, and NFC media.
+  - name: Decisions
+    description: Retrieve verification decisions and registry results.
+  - name: Person
+    description: Retrieve verified person data.
+  - name: Watchlist Screening
+    description: Retrieve AML PEP, sanctions, and adverse-media screening results.
+  - name: Attempts
+    description: List verification attempts within a session.
+paths:
+  /sessions:
+    post:
+      operationId: createSession
+      tags:
+        - Sessions
+      summary: Create a verification session
+      description: >-
+        Starts a new verification session and returns a session ID plus a hosted
+        verification URL. Does not require X-HMAC-SIGNATURE, only X-AUTH-CLIENT.
+      security:
+        - AuthClient: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /sessions/{sessionId}:
+    patch:
+      operationId: updateSession
+      tags:
+        - Sessions
+      summary: Update session status
+      description: >-
+        Updates a session, typically to set its status to "submitted" once the
+        end-user has provided all required media and data. The signed payload is
+        the raw request body.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Session updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteSession
+      tags:
+        - Sessions
+      summary: Delete a session
+      description: >-
+        Deletes a session and its data. Not enabled by default; must be
+        requested from Veriff. The signed value is the session ID.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /sessions/{sessionId}/media:
+    post:
+      operationId: uploadMedia
+      tags:
+        - Media
+      summary: Upload media to a session
+      description: >-
+        Uploads a document, face, or NFC image into a session for
+        server-to-server integrations. Images are provided as base64-encoded
+        content with a context describing what the image represents.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadMediaRequest'
+      responses:
+        '201':
+          description: Media stored.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadMediaResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    get:
+      operationId: getSessionMedia
+      tags:
+        - Media
+      summary: List media for a session
+      description: Returns metadata for the images and videos captured in a session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Media list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /sessions/{sessionId}/collected-data:
+    post:
+      operationId: uploadCollectedData
+      tags:
+        - Sessions
+      summary: Upload collected end-user data
+      description: Submits structured end-user data collected during verification.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '201':
+          description: Data stored.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /sessions/{sessionId}/decision:
+    get:
+      operationId: getSessionDecision
+      tags:
+        - Decisions
+      summary: Retrieve a verification decision
+      description: >-
+        Returns the decision for a session including status, code, extracted
+        document and person data, insights, and risk labels. The signed value
+        is the session ID.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Verification decision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /sessions/{sessionId}/person:
+    get:
+      operationId: getSessionPerson
+      tags:
+        - Person
+      summary: Retrieve verified person data
+      description: Returns the verified person object extracted from a session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Person data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /sessions/{sessionId}/watchlist-screening:
+    get:
+      operationId: getWatchlistScreening
+      tags:
+        - Watchlist Screening
+      summary: Retrieve AML watchlist screening
+      description: >-
+        Returns Politically Exposed Persons (PEP), sanctions, and adverse-media
+        screening results for a session, including hit details.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Watchlist screening result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchlistScreeningResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /sessions/{sessionId}/attempts:
+    get:
+      operationId: getSessionAttempts
+      tags:
+        - Attempts
+      summary: List attempts in a session
+      description: Returns the list of verification attempts made within a session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Attempts list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /attempts/{attemptId}/media:
+    get:
+      operationId: getAttemptMedia
+      tags:
+        - Media
+      summary: List media for an attempt
+      description: Returns metadata for media captured during a specific attempt.
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          description: The attempt UUID.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Media list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /media/{mediaId}:
+    get:
+      operationId: getMediaFile
+      tags:
+        - Media
+      summary: Retrieve a media file
+      description: >-
+        Returns a specific image file by media ID. The signed value is the
+        media ID.
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          description: The media UUID.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Binary image.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    AuthClient:
+      type: apiKey
+      in: header
+      name: X-AUTH-CLIENT
+      description: Your integration's public API key.
+    HmacSignature:
+      type: apiKey
+      in: header
+      name: X-HMAC-SIGNATURE
+      description: >-
+        Hex-encoded HMAC-SHA256 signature of the payload (POST/PATCH) or the
+        resource ID (GET/DELETE), keyed with your integration's shared secret.
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: The verification session UUID.
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: Malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid X-AUTH-CLIENT / X-HMAC-SIGNATURE.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    CreateSessionRequest:
+      type: object
+      required:
+        - verification
+      properties:
+        verification:
+          type: object
+          properties:
+            callback:
+              type: string
+              format: uri
+              description: URL the end-user is redirected to after verification.
+            person:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                idNumber:
+                  type: string
+            document:
+              type: object
+              properties:
+                number:
+                  type: string
+                type:
+                  type: string
+                  description: e.g. PASSPORT, ID_CARD, DRIVERS_LICENSE, RESIDENCE_PERMIT.
+                country:
+                  type: string
+                  description: ISO 3166-1 alpha-2 country code.
+            vendorData:
+              type: string
+              description: Your own identifier for correlating decisions to a user.
+            endUserId:
+              type: string
+              description: Optional end-user identifier for correlation.
+            timestamp:
+              type: string
+              format: date-time
+    CreateSessionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        verification:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            url:
+              type: string
+              format: uri
+              description: Hosted verification URL for the end-user.
+            sessionToken:
+              type: string
+            baseUrl:
+              type: string
+              format: uri
+    UpdateSessionRequest:
+      type: object
+      required:
+        - verification
+      properties:
+        verification:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - submitted
+    UploadMediaRequest:
+      type: object
+      required:
+        - image
+      properties:
+        image:
+          type: object
+          properties:
+            context:
+              type: string
+              description: What the image is, e.g. document-front, document-back, face.
+            content:
+              type: string
+              description: Base64-encoded image content (data URI).
+    UploadMediaResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        image:
+          $ref: '#/components/schemas/Media'
+    MediaListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+        videos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+    Media:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        context:
+          type: string
+        url:
+          type: string
+          format: uri
+        mimetype:
+          type: string
+        size:
+          type: integer
+    DecisionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        verification:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              type: string
+              enum:
+                - approved
+                - declined
+                - resubmission_requested
+                - expired
+                - abandoned
+                - review
+            code:
+              type: integer
+              description: Numeric verification code accompanying the status.
+            reason:
+              type: string
+              nullable: true
+            reasonCode:
+              type: integer
+              nullable: true
+            person:
+              $ref: '#/components/schemas/Person'
+            document:
+              $ref: '#/components/schemas/Document'
+            insights:
+              type: array
+              items:
+                type: object
+                properties:
+                  label:
+                    type: string
+                  result:
+                    type: string
+                  category:
+                    type: string
+            riskLabels:
+              type: array
+              items:
+                type: object
+                properties:
+                  label:
+                    type: string
+                  category:
+                    type: string
+                  sessionIds:
+                    type: array
+                    items:
+                      type: string
+            acceptanceTime:
+              type: string
+              format: date-time
+            decisionTime:
+              type: string
+              format: date-time
+            vendorData:
+              type: string
+              nullable: true
+    PersonResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        person:
+          $ref: '#/components/schemas/Person'
+    Person:
+      type: object
+      properties:
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        citizenship:
+          type: string
+          nullable: true
+        idNumber:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+    Document:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        number:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        validFrom:
+          type: string
+          format: date
+          nullable: true
+        validUntil:
+          type: string
+          format: date
+          nullable: true
+    WatchlistScreeningResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        watchlistScreening:
+          type: object
+          properties:
+            searchResult:
+              type: string
+              description: e.g. NO_MATCH, POSSIBLE_MATCH, MATCH.
+            matchStatus:
+              type: string
+            totalHitCount:
+              type: integer
+            searchTerm:
+              type: string
+            hits:
+              type: array
+              items:
+                type: object
+                properties:
+                  matchTypes:
+                    type: array
+                    items:
+                      type: string
+                  name:
+                    type: string
+                  categories:
+                    type: array
+                    items:
+                      type: string
+                    description: e.g. sanction, pep, adverse-media.
+    AttemptsResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        verifications:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              status:
+                type: string
+              code:
+                type: integer
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: fail
+        code:
+          type: integer
+        message:
+          type: string
